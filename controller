@@ -1,0 +1,51 @@
+package com.example.demo.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import com.example.demo.entity.Notice;
+import com.example.demo.form.Loginform;
+import com.example.demo.service.LoginService;
+
+@Controller
+public class LoginController {
+
+    @Autowired
+     LoginService loginService;
+    
+    
+    @GetMapping("/login")
+    public String showSearchForm() {
+        return "login_pege";
+    }
+        
+    @PostMapping("/login/action")
+        public String login(
+        		@Validated @ModelAttribute Loginform form,
+        		BindingResult result,
+        		org.springframework.ui.Model model) {
+        
+        if (result.hasErrors()) {
+            // バリデーションエラーがあった場合、エラーメッセージを返す
+        		model.addAttribute("validationErrors", result.getAllErrors());
+        		return "login_pege"; // エラーがある場合、フォームに戻す    
+        	}
+            
+            String loginResult = loginService.doLogin(form.getUserId(), form.getPassword());
+            
+        if(loginResult.isEmpty()) {
+        	model.addAttribute("message","ユーザーIDまたはパスワードが異なります。");
+            return "login_pege"; //検索結果が0件の場合、フォームに戻す    
+        }
+        List<Notice> noticeList = loginService.searchNotice(loginResult);
+        model.addAttribute("noticeLists",noticeList);
+        return "pege_form";
+    }
+}
